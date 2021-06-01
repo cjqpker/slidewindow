@@ -2,6 +2,7 @@ package slidewindow
 
 import (
 	"context"
+	"errors"
 	"sync"
 )
 
@@ -32,6 +33,13 @@ func (s *Session) Index() uint64 {
 }
 
 func (sw *SlideWindow) Start(ctx context.Context) error {
+	if sw.Total*sw.Concurrency == 0 {
+		return errors.New("param 'Total' and 'Concurrency' cannot be zero")
+	}
+	if sw.Init == nil || sw.Task == nil || sw.Done == nil {
+		return errors.New("method Init、Task、Done cannot be nil")
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
