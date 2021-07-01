@@ -57,7 +57,9 @@ func (sw *SlideWindow) Start(ctx context.Context) error {
 			defer wg.Done()
 			sw.consumeRoutine(ctx, taskQueue, finishQueue, func(err error) {
 				cancel()
-				errOccured = err
+				if err != context.Canceled {
+					errOccured = err
+				}
 			})
 		}()
 	}
@@ -69,13 +71,19 @@ func (sw *SlideWindow) Start(ctx context.Context) error {
 		defer close(taskQueue)
 		sw.produceRoutine(ctx, taskQueue, finishQueue, func(err error) {
 			cancel()
-			errOccured = err
+			if err != context.Canceled {
+				errOccured = err
+			}
 		})
 	}()
 
 	wg.Wait()
 
-	return errOccured
+	if errOccured != nil {
+		return errOccured
+	}
+
+	return ctx.Err()
 }
 
 func (sw *SlideWindow) produceRoutine(ctx context.Context,
